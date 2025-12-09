@@ -1,5 +1,8 @@
 # Blind Navigation System
 
+training dataset: https://drive.google.com/file/d/1Isqc7mHGZR8vmFGpl7AzRizI4IINzica/view?usp=sharing
+implementation code: https://github.com/tantansir/BlindNav
+
 A prototype system for navigation for visually impaired individuals, based on YOLO semantic segmentation and object detection.  
 Currently, two modes are supported:
 
@@ -16,19 +19,17 @@ Currently, two modes are supported:
 
 ### Object Detection Part
 
-- **blind_merged.v2/**: Contains datasets and configurations for object detection
-  - `test/`, `train/`, `valid/`: Dataset folders
+- **blind_merged.v2/**: Contains data configurations for object detection
+  - `test/`, `train/`, `valid/`: Dataset folders (empty; all data are stored on Google Drive)
   - `blind_merge_config.json`: Configuration for merging the dataset
   - `data.yaml`: YAML file for dataset configuration
   - `merge_details.json`: Details for merging datasets
   - `sampling.py`: Sampling script for data processing
-  - `merge_yolo_datasets.py`: Script for merging YOLO datasets
-  - `train_yolo.py`: Training script for YOLO object detection model
-- **runs_blindroad/**: Folder for various YOLO models trained for road detection
-  - `yv8n_merged_v1/` - `yv8n_merged_v4/`: Folders for different versions of YOLO training outputs
-  - `eda.py`: Exploratory data analysis script
-  - `run.py`: Entry point for running object detection with YOLO
-  - `train_yolo.py`: Training script for YOLO model with road detection
+
+- **eda.py**: Exploratory data analysis script
+- **merge_yolo_datasets.py**: Script for merging YOLO datasets
+- **train_yolo.py**: Training script for YOLO object detection model
+- **run.py**: Entry point for running object detection with YOLO
 
 ### Semantic Segmentation Part
 
