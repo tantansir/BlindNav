@@ -67,7 +67,7 @@ Full dependencies are available in `requirements.txt`.
 # 1. Create and activate a virtual environment (optional but recommended)
 python -m venv venv
 # Windows
-venv\Scriptsctivate
+venv\Scripts\activate
 # macOS / Linux
 source venv/bin/activate
 
