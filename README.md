@@ -1,7 +1,7 @@
 # Blind Navigation System
 
-training dataset: https://drive.google.com/file/d/1Isqc7mHGZR8vmFGpl7AzRizI4IINzica/view?usp=sharing
-implementation code: https://github.com/tantansir/BlindNav
+- training dataset: https://drive.google.com/file/d/1Isqc7mHGZR8vmFGpl7AzRizI4IINzica/view?usp=sharing
+- implementation code: https://github.com/tantansir/BlindNav
 
 A prototype system for navigation for visually impaired individuals, based on YOLO semantic segmentation and object detection.  
 Currently, two modes are supported:
