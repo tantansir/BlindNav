@@ -153,6 +153,7 @@ class LLMDescriptor:
         self.model_name = model_name
         self.timeout = timeout
         self.api_url = f"{self.base_url}/api/generate"
+        self.chat_model_name: Optional[str] = None
 
     def check_connection(self) -> bool:
         """Check if Ollama is running and accessible"""
@@ -173,6 +174,105 @@ class LLMDescriptor:
             return False
         except:
             return False
+
+    def get_chat_model(self) -> str:
+
+        if self.chat_model_name:
+            return self.chat_model_name
+
+        try:
+            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
+            if response.status_code == 200:
+                models = response.json().get('models', [])
+                names = [m.get('name', '') for m in models]
+
+                preferred = [
+                    "llama3.2-vision", "llama3.1-vision",
+                    "llava", "qwen2.5-vl", "qwen2-vl",
+                    "minicpm-v", "moondream"
+                ]
+
+                for p in preferred:
+                    for name in names:
+                        if p.lower() in name.lower():
+                            self.chat_model_name = name
+                            print(f"[Chat] : {self.chat_model_name}")
+                            return self.chat_model_name
+        except Exception:
+            pass
+
+        self.chat_model_name = self.model_name
+        print(f"[Chat] : {self.chat_model_name}")
+        return self.chat_model_name
+
+    def chat_with_image(self, frame_bgr, user_prompt: str,
+                        max_tokens: int = 160,
+                        max_chars: int = 220) -> str:
+        """
+        Chat 模式：用“当前画面（图片）+用户输入”向大模型提问。
+
+        注意：
+        - 不再使用 generate_description 里的安全导航系统 prompt
+        - 这里只保留一个非常轻量的“字数限制 + 用中文回答”的约束
+        """
+        if frame_bgr is None:
+            return "当前画面不可用，稍后再试。"
+
+        # 先把当前帧编码成 JPEG + base64
+        try:
+            ok, buffer = cv2.imencode(".jpg", frame_bgr)
+            if not ok:
+                return "无法编码当前画面。"
+            image_bytes = buffer.tobytes()
+
+            import base64
+            image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+        except Exception as e:
+            return f"编码图片失败: {e}"
+
+        # 轻量 system 约束：只限制语言和长度，不加导航逻辑
+        system_prompt = (
+            f"你现在是一个视障出行辅助对话助手。"
+            f"结合用户的问题和提供的图片，直接给出简洁、具体的回答。"
+            f"回复使用中文，最多不超过{max_chars}个汉字，不要长篇大论。"
+        )
+        final_prompt = (
+            system_prompt
+            + "\n\n用户问题：\n"
+            + user_prompt.strip()
+            + "\n\n请直接给出回答："
+        )
+
+        model = self.get_chat_model()
+
+        # 基本 payload
+        payload = {
+            "model": model,
+            "prompt": final_prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.3,
+                "top_p": 0.9,
+                "max_tokens": max_tokens,  # 第二层长度控制
+            }
+        }
+
+        # 只有在“看起来像视觉模型”的时候才真正塞图片，避免某些纯文本模型报错
+        vision_keywords = ("vision", "vl", "llava", "moondream", "minicpm")
+        if any(k in model.lower() for k in vision_keywords):
+            payload["images"] = [image_b64]
+
+        try:
+            response = requests.post(self.api_url, json=payload, timeout=self.timeout)
+            if response.status_code == 200:
+                return response.json().get("response", "").strip()
+            return f"LLM 调用失败，状态码 {response.status_code}"
+        except requests.exceptions.ConnectionError:
+            return "无法连接到 Ollama，请检查本地服务是否已启动。"
+        except requests.exceptions.Timeout:
+            return "LLM 响应超时。"
+        except Exception as e:
+            return f"LLM 调用异常: {e}"
 
     def generate_description(self, scene_data: str) -> str:
         """
@@ -1675,7 +1775,10 @@ def main():
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter(args.save_path, fourcc, fps, (output_width, output_height))
 
-    window_name = "Blind Navigation v2 - Q:Quit | SPACE:Pause | C:Toggle Crossing | X:LLM Description"
+    window_name = (
+        "Blind Navigation v2 - Q:Quit | SPACE:Pause | "
+        "C:Toggle Crossing | X:LLM Description | P:Chat"
+    )
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
     frame_index = 0
@@ -1683,6 +1786,8 @@ def main():
     last_tl_results = None  # Store traffic light results for visualization
     paused = False
     last_ui_frame = None
+    # 新增：记录最近一帧原始画面，用于 Chat 模式
+    last_raw_frame = None
 
     # Variables to store current detection state for LLM
     current_blind_detected = False
@@ -1699,6 +1804,7 @@ def main():
 
                 frame_index += 1
                 now = time.time()
+                last_raw_frame = frame.copy()
 
                 # Segmentation
                 seg_results = seg_model(frame, imgsz=640, conf=0.4, verbose=False)[0]
@@ -1774,10 +1880,14 @@ def main():
             key = cv2.waitKey(30) & 0xFF
             if key == ord('q') or key == 27:
                 break
-            elif key == ord(' ') or key == ord('p'):
+                # 空格：仍然只负责暂停 / 继续
+            elif key == ord(' '):
                 paused = not paused
+
             elif key == ord('c') or key == ord('C'):
                 workflow_manager.initiate_crossing()
+
+            # X：保持原有“自动场景一句话”
             elif key == ord('x') or key == ord('X'):
                 # Generate LLM scene description
                 if llm_available:
@@ -1824,12 +1934,67 @@ def main():
                         duration=5.0
                     )
                 else:
-                    print("\nLLM not available. Check Ollama service and model installation.\n")
+                    print("\n⚠ LLM not available. Check Ollama service and model installation.\n")
                     message_manager.add_quick_guidance(
                         "LLM not available",
                         "llm_error",
                         duration=2.0
                     )
+
+            # 新增：P 键 —— Chat 模式
+            elif key == ord('p') or key == ord('P'):
+                # 先检查 LLM 是否可用
+                if not llm_available:
+                    print("\n⚠ LLM not available. Check Ollama service and model installation.\n")
+                    message_manager.add_quick_guidance(
+                        "LLM not available",
+                        "llm_chat_error",
+                        duration=2.0
+                    )
+                elif last_raw_frame is None:
+                    print("\n⚠ 当前还没有可用画面。\n")
+                    message_manager.add_quick_guidance(
+                        "当前画面不可用",
+                        "llm_chat_error",
+                        duration=2.0
+                    )
+                else:
+                    # 简单命令行“对话框”
+                    try:
+                        print("\n" + "=" * 60)
+                        user_prompt = input("💬 Chat 模式：请输入要问大模型的问题（直接回车取消）：\n> ").strip()
+                    except EOFError:
+                        user_prompt = ""
+
+                    if user_prompt:
+                        print("\n🤖 正在向大模型发送【当前画面 + 你的问题】...\n")
+
+                        reply = llm.chat_with_image(
+                            last_raw_frame,
+                            user_prompt,
+                            max_tokens=160,  # 可按需调节
+                            max_chars=220,  # 字数上限（中文字符）
+                        )
+
+                        print("-" * 60)
+                        print("LLM Chat 回复：")
+                        print(reply)
+                        print("=" * 60 + "\n")
+
+                        # 语音播报（如果开启）
+                        if voice_manager.enabled:
+                            voice_manager.speak(reply, urgent=True)
+
+                        # 右侧 UI 里显示一条 Chat 消息
+                        prefix = "Chat: "
+                        raw_text = prefix + reply.strip()
+                        wrapped_lines = textwrap.wrap(raw_text, width=40)
+                        wrapped_text = "\n".join(wrapped_lines)
+                        message_manager.add_quick_guidance(
+                            wrapped_text,
+                            "llm_chat_reply",
+                            duration=8.0
+                        )
 
             if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
                 break
