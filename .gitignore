@@ -3,14 +3,4 @@ venv/
 
 .idea/
 
-video/
-*.mp4
-*.avi
-*.mov
-
-*.pth
-*.pt
-*.ckpt
-*.bin
-
 *.rar
