@@ -1,0 +1,100 @@
+{
+  "class_mapping": {
+    "base_bicycle": 0,
+    "base_bus": 1,
+    "base_car": 2,
+    "base_motorbike": 3,
+    "base_person": 4,
+    "base_truck": 5,
+    "s2_1": 0,
+    "s2_2": 1,
+    "s2_3": 2,
+    "s2_4": 6,
+    "s2_5": 7,
+    "s2_6": 8,
+    "s2_9": 3,
+    "s2_10": 9,
+    "s2_11": 4,
+    "s2_12": 10,
+    "s2_16": 5,
+    "tgp_0": 11,
+    "tl_0": 12,
+    "tl_1": 13,
+    "tl_2": 14,
+    "wa_0": 15,
+    "wa_1": 16,
+    "wa_3": 17
+  },
+  "final_classes": [
+    "bicycle",
+    "bus",
+    "car",
+    "motorbike",
+    "person",
+    "truck",
+    "chair",
+    "clock",
+    "fire hydrant",
+    "om",
+    "pottedplant",
+    "tactile-guide-path",
+    "green_light",
+    "red_light",
+    "yellow_light",
+    "Crosswalk",
+    "Don-t Walk",
+    "Walk"
+  ],
+  "merge_configs": [
+    {
+      "path": "street.v1i.yolov8",
+      "classes": [
+        "bicycle",
+        "bus",
+        "car",
+        "chair",
+        "clock",
+        "fire hydrant",
+        "motorbike",
+        "om",
+        "person",
+        "pottedplant",
+        "truck"
+      ],
+      "mapping": {},
+      "merge_all": false,
+      "prefix": "s2_"
+    },
+    {
+      "path": "Tactile Guide Path.v1i.yolov8",
+      "classes": [
+        "tactile-guide-path"
+      ],
+      "mapping": {},
+      "merge_all": false,
+      "prefix": "tgp_"
+    },
+    {
+      "path": "traffic-light",
+      "classes": [
+        "green_light",
+        "red_light",
+        "yellow_light"
+      ],
+      "mapping": {},
+      "merge_all": false,
+      "prefix": "tl_"
+    },
+    {
+      "path": "Walk Assist.v3i.yolov8",
+      "classes": [
+        "Crosswalk",
+        "Don-t Walk",
+        "Walk"
+      ],
+      "mapping": {},
+      "merge_all": false,
+      "prefix": "wa_"
+    }
+  ]
+}

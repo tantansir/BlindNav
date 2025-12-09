@@ -1,0 +1,38 @@
+merge_info:
+  base_dataset: Street View.v3i.yolov8
+  merge_sources:
+  - street.v1i.yolov8
+  - Tactile Guide Path.v1i.yolov8
+  - traffic-light
+  - Walk Assist.v3i.yolov8
+  merge_time: '2025-11-29 17:05:12'
+  total_classes: 18
+names:
+- bicycle
+- bus
+- car
+- motorbike
+- person
+- truck
+- chair
+- clock
+- fire hydrant
+- om
+- pottedplant
+- tactile-guide-path
+- green_light
+- red_light
+- yellow_light
+- Crosswalk
+- Don-t Walk
+- Walk
+nc: 18
+roboflow:
+  license: CC BY 4.0
+  project: street-view-gdogo
+  url: https://universe.roboflow.com/fsmvu/street-view-gdogo/dataset/3
+  version: 3
+  workspace: fsmvu
+test: ./test/images
+train: ./train/images
+val: ./valid/images

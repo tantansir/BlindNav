@@ -1,0 +1,58 @@
+{
+  "sources": [
+    {
+      "path": "./street.v1i.yolov8",
+      "classes": [
+        "bicycle",
+        "bus",
+        "car",
+        "chair",
+        "clock",
+        "fire hydrant",
+        "motorbike",
+        "om",
+        "person",
+        "pottedplant",
+        "truck"
+      ],
+      "mapping": {},
+      "merge_all": false,
+      "prefix": "s2_",
+      "description": "从第二个街景数据集补充常见街道目标"
+    },
+    {
+      "path": "./Tactile Guide Path.v1i.yolov8",
+      "classes": [
+        "tactile-guide-path"
+      ],
+      "mapping": {},
+      "merge_all": false,
+      "prefix": "tgp_",
+      "description": "触觉引导路径"
+    },
+    {
+      "path": "./traffic-light",
+      "classes": [
+        "green_light",
+        "red_light",
+        "yellow_light"
+      ],
+      "mapping": {},
+      "merge_all": false,
+      "prefix": "tl_",
+      "description": "交通信号灯相关类"
+    },
+    {
+      "path": "./Walk Assist.v3i.yolov8",
+      "classes": [
+        "Crosswalk",
+        "Don-t Walk",
+        "Walk"
+      ],
+      "mapping": {},
+      "merge_all": false,
+      "prefix": "wa_",
+      "description": "行人过街辅助相关类"
+    }
+  ]
+}
